@@ -10,20 +10,24 @@ class BivariateAnalysisTemplate(ABC):
         pass
 
     @staticmethod
-    def update_df(df: pd.DataFrame, feature1: str, feature2: str, *args, **kwargs) -> pd.DataFrame:
-        min_f1_value = kwargs.get('min_f1_value')
-        min_f2_value = kwargs.get('min_f2_value')
-        verbose = kwargs.get('verbose')
+    def update_df(df: pd.DataFrame, feature1: str, feature2: str, verbose: bool = False, *args, **kwargs) -> pd.DataFrame:
+        filters = {
+            "min_f1_value": (kwargs.get('min_f1_value'), lambda abt, val: abt[abt[feature1] > val]),
+            "max_f1_value": (kwargs.get('max_f1_value'), lambda abt, val: abt[abt[feature1] < val]),
+            "min_f2_value": (kwargs.get('min_f2_value'), lambda abt, val: abt[abt[feature2] > val]),
+            "max_f2_value": (kwargs.get('max_f2_value'), lambda abt, val: abt[abt[feature2] < val]),
+        }
+        verbose = verbose
 
         abt = df.copy()
-        if min_f1_value is not None:
-            abt = abt[abt[feature1] > min_f1_value]
-            if verbose: print(f"Applied filter for {feature1}")
-        if min_f2_value is not None:
-            abt = abt[abt[feature2] > min_f2_value]
-            if verbose: print(f"Applied filter for {feature2}")
+        for key, (value, filter_fn) in filters.items():
+            if value is not None:
+                abt = filter_fn(abt, value)
+                if verbose:
+                    print(f"applied for filter {key.replace('_', ' ')} | value: {value}")
 
-        if verbose: print(f"Original shape: {df.shape}, Filtered shape: {abt.shape}")
+        if verbose:
+            print(f"Original shape: {df.shape} | Updated shape: {abt.shape}")
         return abt
 
 
@@ -57,16 +61,22 @@ class BivariateAnalysis:
     def set_analyser(self, strategy: BivariateAnalysisTemplate):
         self.strategy = strategy
 
-    def execute_analysis(self, df: pd.DataFrame, feature1: str, feature2: str, min_f1_value: float = None,
-                         min_f2_value: float = None) -> None:
+    def execute_analysis(self, df: pd.DataFrame, feature1: str, feature2: str, verbose: bool = False,
+                         min_f1_value: float = None, max_f1_value: float = None,
+                         min_f2_value: float = None, max_f2_value: float = None) -> None:
+
         assert feature1 in df.columns, f"Feature {feature1} must be in {df.columns}"
         assert feature2 in df.columns, f"Feature {feature2} must be in {df.columns}"
 
-        abt = self.strategy.update_df(df, feature1, feature2, min_f1_value=min_f1_value, min_f2_value=min_f2_value)
+        abt = self.strategy.update_df(df, feature1, feature2, verbose=verbose,
+                                      min_f1_value=min_f1_value, max_f1_value=max_f1_value,
+                                      min_f2_value=min_f2_value, max_f2_value=max_f2_value)
         self.strategy.analysis(abt, feature1, feature2)
 
 
 if __name__ == "__main__":
     df = pd.read_csv("../../extracted_data/train.csv")
-    bivariate_analysis = BivariateAnalysis(NumericalVsNumericalBivariateAnalysis())
-    bivariate_analysis.execute_analysis(df, feature1="model", feature2="price", min_f2_value=2000000)
+    bivariate_analysis = BivariateAnalysis(CategoricalVsNumericalBivariateAnalysis())
+    bivariate_analysis.execute_analysis(df, feature1="brand", feature2="price", max_f2_value=500000, verbose=True)
+
+
