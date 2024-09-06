@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 
 class UnivariateAnalysisTemplate(ABC):
     @abstractmethod
-    def analyze(self, df: pd.DataFrame, feature: str) -> None:
+    def analyze(self, df: pd.DataFrame, feature: str, *args, **kwargs) -> None:
         pass
 
 
@@ -14,22 +14,21 @@ class NeumericalUnivariateAnalysis(UnivariateAnalysisTemplate):
     def __init__(self, bins: int = 30):
         self.bins = bins
 
-    def analyze(self, df: pd.DataFrame, feature: str, bins: int = self.bins) -> None:
+    def analyze(self, df: pd.DataFrame, feature: str, **kwargs) -> None:
+        bins = kwargs.get('bins', self.bins)
 
         assert feature in df.columns, f"{feature} is not in the dataframe. available features: {df.columns}"
-        try:
-            plt.figure(figsize=(15, 8))
-            sns.histplot(df[feature], bins=bins, kde=True)
-            plt.title(f"Distribution of {feature}")
-            plt.xlabel(feature)
-            plt.ylabel("Frequency")
-            plt.show()
-        except Exception as e:
-            print(f"selected feature is not numerical: {e}")
+
+        plt.figure(figsize=(15, 8))
+        sns.histplot(df[feature], bins=bins, kde=True)
+        plt.title(f"Distribution of {feature}")
+        plt.xlabel(feature)
+        plt.ylabel("Frequency")
+        plt.show()
 
 
 class CatagoricalUnivariateAnalysis(UnivariateAnalysisTemplate):
-    def analyze(self, df: pd.DataFrame, feature: str) -> None:
+    def analyze(self, df: pd.DataFrame, feature: str, **kwargs) -> None:
         assert feature in df.columns, f"{feature} is not in the dataframe. available features: {df.columns}"
 
         try:
@@ -42,6 +41,7 @@ class CatagoricalUnivariateAnalysis(UnivariateAnalysisTemplate):
             plt.show()
         except Exception as e:
             print(f"selected feature is not categorical: {e}")
+
 
 class UnivariateAnalysis:
     def __init__(self, analyser: UnivariateAnalysisTemplate):
