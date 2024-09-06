@@ -4,13 +4,13 @@ import seaborn as sns
 from abc import ABC, abstractmethod
 
 
-class UnivariateAnalysisTemplate(ABC):
+class UniVariateAnalysisTemplate(ABC):
     @abstractmethod
     def analyze(self, df: pd.DataFrame, feature: str, *args, **kwargs) -> None:
         pass
 
 
-class NeumericalUnivariateAnalysis(UnivariateAnalysisTemplate):
+class NumericalUniVariateAnalysis(UniVariateAnalysisTemplate):
     def __init__(self, bins: int = 30):
         self.bins = bins
 
@@ -27,7 +27,7 @@ class NeumericalUnivariateAnalysis(UnivariateAnalysisTemplate):
         plt.show()
 
 
-class CatagoricalUnivariateAnalysis(UnivariateAnalysisTemplate):
+class CategoricalUniVariateAnalysis(UniVariateAnalysisTemplate):
     def analyze(self, df: pd.DataFrame, feature: str, **kwargs) -> None:
         assert feature in df.columns, f"{feature} is not in the dataframe. available features: {df.columns}"
 
@@ -43,11 +43,11 @@ class CatagoricalUnivariateAnalysis(UnivariateAnalysisTemplate):
             print(f"selected feature is not categorical: {e}")
 
 
-class UnivariateAnalysis:
-    def __init__(self, analyser: UnivariateAnalysisTemplate):
+class UniVariateAnalysis:
+    def __init__(self, analyser: UniVariateAnalysisTemplate):
         self.analyser = analyser
 
-    def set_analyser(self, analyser: UnivariateAnalysisTemplate):
+    def set_analyser(self, analyser: UniVariateAnalysisTemplate):
         self.analyser = analyser
 
     def execute_analysis(self, df: pd.DataFrame, feature: str) -> None:
@@ -56,5 +56,5 @@ class UnivariateAnalysis:
 
 if __name__ == '__main__':
     train_df = pd.read_csv('../../extracted_data/train.csv')
-    analyser = UnivariateAnalysis(NeumericalUnivariateAnalysis())
+    analyser = UniVariateAnalysis(NumericalUniVariateAnalysis())
     analyser.execute_analysis(train_df, feature='milage')
