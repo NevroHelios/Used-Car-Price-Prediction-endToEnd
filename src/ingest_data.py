@@ -23,11 +23,11 @@ class ZipDataIngestor(DataIngestor):
         """ Ingests the data from zip file
         Parameters:
             takes zip file path as input"""
-        if not file_path.endswith(".zip"):
+        if not zip_file_path.endswith(".zip"):
             raise Exception("File extension must be .zip")
 
         # extract the zip data
-        root_dir = Path(file_path).parent.parent
+        root_dir = Path(zip_file_path).parent.parent
         extract_dir = root_dir / "extracted_data"
         with zipfile.ZipFile(file_path, "r") as zip_ref:
             zip_ref.extractall(extract_dir)
@@ -54,7 +54,7 @@ class ZipDataIngestor(DataIngestor):
 class DataIngestorFactory:
     @staticmethod
     def get_data_ingestor(file_extension: str) -> DataIngestor:
-        """:returns the appropriate DataIngestor based on the file extension (currently supports .zip"""
+        """returns the appropriate DataIngestor based on the file extension (currently supports .zip"""
         if file_extension == "zip" or file_extension == ".zip":
             return ZipDataIngestor()
         else:
