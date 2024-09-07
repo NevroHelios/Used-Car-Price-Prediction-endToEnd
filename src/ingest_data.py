@@ -29,7 +29,7 @@ class ZipDataIngestor(DataIngestor):
         # extract the zip data
         root_dir = Path(zip_file_path).parent.parent
         extract_dir = root_dir / "extracted_data"
-        with zipfile.ZipFile(file_path, "r") as zip_ref:
+        with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
             zip_ref.extractall(extract_dir)
 
         extracted_files = os.listdir(extract_dir)
@@ -63,15 +63,15 @@ class DataIngestorFactory:
 
 if __name__ == "__main__":
     # get the specific path for the file
-    file_path = "E:\kaggle\Regression of Used Car Prices\data\playground-series-s4e9.zip"
+    file_path_demo = "E:\kaggle\Regression of Used Car Prices\data\playground-series-s4e9.zip"
 
     # get the file extension
-    file_extension = file_path.split(".")[-1]
+    file_extension = file_path_demo.split(".")[-1]
 
     # get the data ingestor
     data_ingestor = DataIngestorFactory.get_data_ingestor(file_extension)
 
     # ingest the data and load it into dataframe
-    df_train, df_test, df_sample = data_ingestor.ingest(file_path)
+    df_train, df_test, df_sample = data_ingestor.ingest(file_path_demo)
 
     print(df_train.head())
