@@ -1,6 +1,6 @@
 import pandas as pd
 
-from pipelines.handle_missing_values import (
+from src.handle_missing_values import (
     MissingValuesHandler,
     DropMissingValuesStrategy,
     FillMissingValuesStrategy
