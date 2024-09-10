@@ -1,2 +1,5 @@
 extracted_data/
 zenml/
+venv
+.idea
+get-pip.py

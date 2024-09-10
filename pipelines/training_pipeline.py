@@ -6,6 +6,8 @@ from steps.outlier_detection_step import outlier_detection_step
 from steps.data_splitter_step import data_splitter
 from steps.model_building_step import model_building_step
 import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 os.environ['NUMEXPR_MAX_THREADS'] = '6'
 os.environ['NUMEXPR_NUM_THREADS'] = '2'
 
@@ -13,7 +15,7 @@ os.environ['NUMEXPR_NUM_THREADS'] = '2'
 @pipeline(name="used_car_price_predictor")
 def ml_pipeline():
     raw_data_artifacts = data_ingestion_step(
-        file_path="../data/playground-series-s4e9.zip"
+        file_path="data/playground-series-s4e9.zip"
     )
     train, test, sample = raw_data_artifacts
 
