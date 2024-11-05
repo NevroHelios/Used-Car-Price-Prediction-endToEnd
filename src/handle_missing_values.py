@@ -18,6 +18,7 @@ class DropMissingValuesStrategy(MissingValuesHandleTemplate):
         self.thresh = thresh
 
     def __repr__(self):
+        
         return "DropMissingValuesStrategy"
 
     def handle(self, df: pd.DataFrame) -> pd.DataFrame:

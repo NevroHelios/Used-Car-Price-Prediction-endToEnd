@@ -4,8 +4,96 @@ import logging
 from typing import List
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
+from sklearn.base import BaseEstimator, TransformerMixin
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+
+class TargetEncode(BaseEstimator, TransformerMixin):
+    def __init__(self, categories='auto', k=1, f=1, noise_level=0, random_state=42):
+        self.categories = categories
+        self.k = k
+        self.f = f
+        self.noise_level = noise_level
+        self.random_state = random_state
+        self.encodings = {}
+        self.prior = None
+        self.feature_names = None
+        self.features_names_out_ = None
+        
+    def add_noise(self, series, noise_level):
+        return series * (1 + noise_level * np.random.randn(len(series)))
+    
+    def fit(self, X, y=None):
+        # Convert numpy array to DataFrame if necessary
+        if isinstance(X, np.ndarray):
+            if self.categories == 'auto':
+                self.feature_names = [f'feature_{i}' for i in range(X.shape[1])]
+            else:
+                self.feature_names = self.categories
+            X = pd.DataFrame(X, columns=self.feature_names)
+        
+        # Determine categories if auto
+        if self.categories == 'auto':
+            self.feature_names = X.columns.tolist()
+        elif isinstance(self.categories, str):
+            self.feature_names = [self.categories]
+        else:
+            self.feature_names = self.categories
+            
+        # Calculate prior
+        self.prior = y.mean()
+        
+        # Calculate encodings for each feature
+        for feature in self.feature_names:
+            # Create temporary dataframe
+            temp = pd.DataFrame({'feature': X[feature], 'target': y})
+            
+            # Calculate averages and counts
+            avg = temp.groupby('feature')['target'].agg(['count', 'mean'])
+            
+            # Apply smoothing
+            smoothing = 1 / (1 + np.exp(-(avg['count'] - self.k) / self.f))
+            encoded_values = self.prior * (1 - smoothing) + avg['mean'] * smoothing
+            
+            # Store encodings
+            self.encodings[feature] = encoded_values.to_dict()
+            
+        return self
+    
+    def transform(self, X):
+        # Convert numpy array to DataFrame if necessary
+        if isinstance(X, np.ndarray):
+            X = pd.DataFrame(X, columns=self.feature_names)
+            
+        Xt = X.copy()
+        
+        # Transform each feature
+        for feature in self.feature_names:
+            # Replace known categories
+            Xt[feature] = Xt[feature].map(self.encodings[feature])
+            
+            # Handle unknown categories
+            Xt[feature] = Xt[feature].fillna(self.prior)
+            
+            # Add noise if specified
+            if self.noise_level > 0:
+                if self.random_state is not None:
+                    np.random.seed(self.random_state)
+                Xt[feature] = self.add_noise(Xt[feature], self.noise_level)
+        
+        return Xt.values
+    
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X)
+    
+    # @staticmethod
+    def get_feature_names_out(self, features_names=None):
+        if features_names is not None:
+            return np.asarray(features_names, dtype=str)
+        return self.feature_names
+
 
 
 class FeatureEngineeringTemplate(ABC):
@@ -55,10 +143,12 @@ class MinMaxScaling(FeatureEngineeringTemplate):
         return df_transformed
 
 
+
 class OneHotEncoding(FeatureEngineeringTemplate):
-    def __init__(self, features: List[str]):
+    def __init__(self, features: List[str], cardinality_threshold: int = 7):
         self.features = features
         self.ohe = OneHotEncoder()
+        self.cardinality_threshold = cardinality_threshold
 
     def apply_transform(self, df: pd.DataFrame) -> pd.DataFrame:
         logging.info("Applying OneHot Encoding")
