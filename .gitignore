@@ -3,3 +3,5 @@ zenml/
 venv
 .idea
 get-pip.py
+mlruns/
+__pycache__
