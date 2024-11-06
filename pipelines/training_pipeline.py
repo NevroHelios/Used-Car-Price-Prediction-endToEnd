@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import os
 import sys
+import logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 os.environ['NUMEXPR_MAX_THREADS'] = '6'
 os.environ['NUMEXPR_NUM_THREADS'] = '2'
@@ -13,6 +15,7 @@ from steps.feature_engineering_step import feature_engineering_step
 from steps.outlier_detection_step import outlier_detection_step
 from steps.data_splitter_step import data_splitter
 from steps.model_building_step import model_building_step
+from steps.evaluation_step import evaluation_step
 
 @pipeline(name="used_car_price_predictor")
 def ml_pipeline():
@@ -31,6 +34,11 @@ def ml_pipeline():
 
     X_train, X_test, y_train, y_test = data_splitter(cleaned_train)
     model_pipeline = model_building_step(X_train, y_train)
+
+    logging.warning(model_pipeline)
+
+    pipeline = evaluation_step(model_pipeline, X_test, y_test)
+    
 
 
 if __name__ == '__main__':

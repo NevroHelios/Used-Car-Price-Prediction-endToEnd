@@ -13,7 +13,8 @@ from zenml.client import Client
 from typing import Annotated
 import mlflow
 
-from src.feature_engineering import TargetEncode
+from src.feature_engineering import TargetEncode, GroupRareCategories
+from pipelines.utils import SklearnPipelineMaterializer
 # from category_encoders import TargetEncoder
 
 experimental_tracker = Client().active_stack.experiment_tracker
@@ -21,34 +22,35 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
 model = Model(
     name="Regression Model",
-    version="0.1.0",
+    version="0.1.0", 
     license="Apache License 2.0",
     description="Regression Model for predicting used car prices",
 )
 
 
-@step(enable_cache=False, experiment_tracker=experimental_tracker, model=model)
+@step(enable_cache=True, experiment_tracker=experimental_tracker, model=model)
 def model_building_step(x_train: pd.DataFrame, y_train: pd.Series)\
-        -> Annotated[Pipeline, ArtifactConfig(name="sklearn_pipeline", is_model_artifact=True)]:
+        -> Annotated[Pipeline, ArtifactConfig(materializer=SklearnPipelineMaterializer, is_model_artifact=True)]:
     
     # creating pipelins for numerical and categorical features
-    high_cardinality_cols = ["brand", "model", "engine", "ext_col"]
-    low_cardinality_cols = ["fuel_type", "transmission", "int_col", "accident"] 
+    high_cardinality_cols = ["brand", "model", "engine", "ext_col", "int_col", "transmission"]
+    low_cardinality_cols = ["fuel_type", "accident"] 
     binary_cols = ["accident"]
     # binary_lookup = {s: i for }
 
-    def group_rare_categories(df, col, threshold):
-        freq_counts = df[col].value_counts()
-        rare_categories = freq_counts[freq_counts < threshold].index
-        df[col] = df[col].apply(lambda x: f"other_{col}" if x in rare_categories else x)
-        return df
+    # def group_rare_categories(df, col, threshold):
+    #     freq_counts = df[col].value_counts()
+    #     rare_categories = freq_counts[freq_counts < threshold].index
+    #     df[col] = df[col].apply(lambda x: f"other_{col}" if x in rare_categories else x)
+    #     return df
 
-    for col in high_cardinality_cols:
-        group_rare_categories(x_train, col, threshold=x_train[col].value_counts().mean()) 
+    # for col in high_cardinality_cols:
+    #     group_rare_categories(x_train, col, threshold=x_train[col].value_counts().mean()) 
 
     # define transformers
     preprocessor = ColumnTransformer(
         transformers=[
+            # ('group_rare', GroupRareCategories(), high_cardinality_cols),
             ("target_encoder", TargetEncode(), high_cardinality_cols), 
             ("ohe", OneHotEncoder(handle_unknown="ignore", sparse_output=False), low_cardinality_cols),  
             # ("binary", FunctionTransformer(lambda x: x), binary_cols),  
@@ -67,7 +69,8 @@ def model_building_step(x_train: pd.DataFrame, y_train: pd.Series)\
     #         colsample_bytree=0.8,
     #         random_state=42,
     #         tree_method="hist", 
-    #         device='cuda'
+    #         device='cuda',
+    #         verbosity=2
     #     ))
     # ])
 
@@ -105,5 +108,5 @@ def model_building_step(x_train: pd.DataFrame, y_train: pd.Series)\
 
     finally:
         mlflow.end_run()
-
+    logging.info(f"returning pipeline {pipeline}")
     return pipeline

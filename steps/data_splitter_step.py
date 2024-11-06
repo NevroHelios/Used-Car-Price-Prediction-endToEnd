@@ -16,12 +16,12 @@ def data_splitter(x_train: pd.DataFrame,
     
     x_train = x_train.drop('clean_title', axis=1) # dropping the clean_title column it has only 1 unique value
     if sample:
-        x_train = x_train.sample(frac=0.01, random_state=random_state)
+        x_train = x_train.sample(frac=0.1, random_state=random_state)
         logging.info(f"Using a sample of the data | Shape: {x_train.shape}")
     
     x_train = x_train.apply(lambda col: col.astype(float) if col.dtype == 'int' else col)
 
-    x = x_train.drop(['price'], axis=1)
+    x = x_train.drop(['price', 'id'], axis=1)
     y = x_train['price']
     X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=test_size, random_state=random_state)
     logging.info("Data splitter done")
