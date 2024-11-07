@@ -24,3 +24,6 @@
 - then run the pipeline
   
   ```python pipelines/training_pipeline.py```
+
+  - for mlflow interactive ui
+    ```mlflow ui```
