@@ -25,5 +25,6 @@
   
   ```python pipelines/training_pipeline.py```
 
-  - for mlflow interactive ui
-    ```mlflow ui```
+- for mlflow interactive ui
+
+   ```mlflow ui```
