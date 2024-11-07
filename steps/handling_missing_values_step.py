@@ -8,7 +8,7 @@ from src.handle_missing_values import (
 from zenml import step
 
 
-@step
+@step(enable_cache=False)
 def handle_missing_values_step(df: pd.DataFrame, strategy: str = 'mode', thresh=None, fill_value=None):
     if strategy == 'drop':
         handler = MissingValuesHandler(DropMissingValuesStrategy(axis=0, thresh=thresh))

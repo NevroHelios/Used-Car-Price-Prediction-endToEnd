@@ -11,7 +11,7 @@ from src.feature_engineering import (
 )
 
 
-@step
+@step(enable_cache=False)
 def feature_engineering_step(dataframe: pd.DataFrame, strategy: str, features: List[str]) -> pd.DataFrame:
     if strategy == 'log':
         handler = FeatureEngineer(LogTransform(features=features))

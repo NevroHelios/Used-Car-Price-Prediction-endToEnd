@@ -11,7 +11,7 @@ from sklearn.base import RegressorMixin
 # expression_tracker = Client().active_stack.experiment_tracker
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
-@step
+@step(enable_cache=False)
 def evaluation_step(model_pipeline: RegressorMixin,
                     X_test: pd.DataFrame, y_test: pd.Series) \
                     -> pd.DataFrame:
@@ -33,9 +33,6 @@ def evaluation_step(model_pipeline: RegressorMixin,
         mlflow.log_metric("r2", r2)
         
         logging.info(f"Logged Metrices: rmse = {rmse}, r2 = {r2}")
-        
-        processed_columns = list(model_pipeline.named_steps['preprocessor'].get_feature_names_out())
-        mlflow.log_dict({"processed_columns": processed_columns}, "processed_columns.json")
     
         if hasattr(model_pipeline, 'named_steps'):
             processed_columns = list(model_pipeline.named_steps['preprocessor'].get_feature_names_out())

@@ -4,7 +4,7 @@ from zenml import step
 from typing import Tuple
 
 
-@step
+@step(enable_cache=False)
 def data_ingestion_step(file_path: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     file_extension = '.zip'
     data_ingestor = DataIngestorFactory.get_data_ingestor(file_extension)

@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
-@step
+@step(enable_cache=False)
 def data_splitter(x_train: pd.DataFrame, 
                   test_size: float = 0.2, 
                   random_state: int = 42,
@@ -15,11 +15,13 @@ def data_splitter(x_train: pd.DataFrame,
         -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     
     x_train = x_train.drop('clean_title', axis=1) # dropping the clean_title column it has only 1 unique value
-    if sample:
-        x_train = x_train.sample(frac=0.1, random_state=random_state)
-        logging.info(f"Using a sample of the data | Shape: {x_train.shape}")
+    # if sample:
+    #     x_train = x_train.sample(frac=0.1, random_state=random_state)
+    #     logging.info(f"Using a sample of the data | Shape: {x_train.shape}")
     
-    x_train = x_train.apply(lambda col: col.astype(float) if col.dtype == 'int' else col)
+    # x_train = x_train.apply(lambda col: col.astype(float) if col.dtype == 'int' else col)
+    numeric_columns = x_train.select_dtypes(include=['int', 'int64', 'float']).columns
+    x_train[numeric_columns] = x_train[numeric_columns].astype('float64')
 
     x = x_train.drop(['price', 'id'], axis=1)
     y = x_train['price']

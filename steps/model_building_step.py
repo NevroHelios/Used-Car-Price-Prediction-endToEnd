@@ -1,21 +1,15 @@
 import logging
-
 import pandas as pd
-from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import mean_squared_error
 from xgboost import XGBRegressor
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from zenml import ArtifactConfig, step, Model
 from zenml.client import Client
-# from zenml.utils import 
-from typing import Annotated
 import mlflow
 
-from src.feature_engineering import TargetEncode, GroupRareCategories
-from pipelines.utils import SklearnPipelineMaterializer
+from src.feature_engineering import TargetEncode
 from sklearn.base import RegressorMixin
 # from category_encoders import TargetEncoder
 
@@ -28,11 +22,10 @@ model=Model(
     version="1.0.0",
     description="Used car price predictor",
 )
-
 experimental_tracker = Client().active_stack.experiment_tracker
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
-@step(enable_cache=True, experiment_tracker=experimental_tracker, model=model)
+@step(enable_cache=False, experiment_tracker=experimental_tracker, model=model)
 def model_building_step(x_train: pd.DataFrame, y_train: pd.Series)\
         -> RegressorMixin:
     
@@ -52,9 +45,9 @@ def model_building_step(x_train: pd.DataFrame, y_train: pd.Series)\
 
     pipeline = PipelineRegressor(steps=[
         ('preprocessor', preprocessor),
-        ('regressor', RandomForestRegressor(
-            warm_start=True,
-            n_estimators=100
+        ('regressor', GradientBoostingRegressor(
+            n_estimators=100,
+            max_depth=5,
         ))
     ])
 
@@ -64,7 +57,7 @@ def model_building_step(x_train: pd.DataFrame, y_train: pd.Series)\
     try:
         mlflow.sklearn.autolog()
 
-        logging.info("Building and training RF model")
+        logging.info(f"Building and training {pipeline.named_steps['regressor']} model")
         pipeline.fit(x_train, y_train)
         logging.info("Model training Completed")
 

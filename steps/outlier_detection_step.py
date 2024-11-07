@@ -9,7 +9,7 @@ import pandas as pd
 import logging
 
 
-@step
+@step(enable_cache=False)
 def outlier_detection_step(df: pd.DataFrame, feature: str, strategy: str, method: str = None) -> pd.DataFrame:
     if strategy == 'IQR':
         handler = DetectOutliers(IQROutlierDetection())
