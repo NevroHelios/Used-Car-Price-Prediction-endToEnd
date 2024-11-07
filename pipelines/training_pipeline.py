@@ -1,4 +1,4 @@
-from zenml import pipeline
+from zenml import pipeline, Model, get_pipeline_context
 import numpy as np
 import pandas as pd
 import os
@@ -17,7 +17,7 @@ from steps.data_splitter_step import data_splitter
 from steps.model_building_step import model_building_step
 from steps.evaluation_step import evaluation_step
 
-@pipeline(name="used_car_price_predictor")
+@pipeline(name="used_car_price_predictor",)
 def ml_pipeline():
     raw_data_artifacts = data_ingestion_step(
         file_path="data/playground-series-s4e9.zip"
@@ -33,11 +33,10 @@ def ml_pipeline():
     cleaned_train = outlier_detection_step(df=engineered_train, feature='price', strategy='IQR', method='remove')
 
     X_train, X_test, y_train, y_test = data_splitter(cleaned_train)
+
     model_pipeline = model_building_step(X_train, y_train)
-
-    logging.warning(model_pipeline)
-
-    pipeline = evaluation_step(model_pipeline, X_test, y_test)
+     
+    metrices = evaluation_step(model_pipeline=model_pipeline, X_test=X_test, y_test=y_test)
     
 
 

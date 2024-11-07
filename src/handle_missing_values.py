@@ -51,7 +51,6 @@ class FillMissingValuesStrategy(MissingValuesHandleTemplate):
             df_cleaned = df_cleaned.fillna(self.fill_value)
         else:
             logging.info(f"Invalid method {self.method}")
-        logging.info("Missing values filled!")
         return df_cleaned
 
 
