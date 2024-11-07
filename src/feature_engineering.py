@@ -26,7 +26,6 @@ class TargetEncode(BaseEstimator, TransformerMixin):
         return series * (1 + noise_level * np.random.randn(len(series)))
     
     def fit(self, X, y=None):
-        logging.info("target encode fiting")
         if isinstance(X, np.ndarray):
             if self.categories == 'auto':
                 self.feature_names = [f'feature_{i}' for i in range(X.shape[1])]
@@ -50,11 +49,9 @@ class TargetEncode(BaseEstimator, TransformerMixin):
             encoded_values = self.prior * (1 - smoothing) + avg['mean'] * smoothing
  
             self.encodings[feature] = encoded_values.to_dict()
-        logging.info("target encode fiting complete")
         return self
     
     def transform(self, X):
-        logging.info("target encode transform")
         if isinstance(X, np.ndarray):
             X = pd.DataFrame(X, columns=self.feature_names)
             
@@ -68,7 +65,6 @@ class TargetEncode(BaseEstimator, TransformerMixin):
                 if self.random_state is not None:
                     np.random.seed(self.random_state)
                 Xt[feature] = self.add_noise(Xt[feature], self.noise_level)
-        logging.info("target encode transform complete")
         return Xt.values
     
     def fit_transform(self, X, y=None):
@@ -76,7 +72,6 @@ class TargetEncode(BaseEstimator, TransformerMixin):
     
     # @staticmethod
     def get_feature_names_out(self, features_names=None):
-        logging.info("getting feature names")
         if features_names is not None:
             return np.asarray(features_names, dtype=str)
         return self.feature_names
@@ -91,7 +86,6 @@ class GroupRareCategories(BaseEstimator, TransformerMixin):
         self.feature_names = None
 
     def fit(self, X, y=None):
-        logging.info("GroupRareCategories: Starting fit")
 
         if isinstance(X, np.ndarray):
             if self.categories == 'auto':
@@ -108,11 +102,9 @@ class GroupRareCategories(BaseEstimator, TransformerMixin):
             self.rare_categories[col] = freq_count[freq_count < threshold_value].index
             self.feature_names_out_.append(col)
 
-        logging.info("GroupRareCategories: Fit complete")
         return self
 
     def transform(self, X):
-        logging.info("GroupRareCategories: Starting transform")
 
         # Ensure X is a DataFrame for consistency
         if isinstance(X, np.ndarray):
@@ -122,14 +114,12 @@ class GroupRareCategories(BaseEstimator, TransformerMixin):
         for col, rare_categories in self.rare_categories.items():
             Xt[col] = Xt[col].apply(lambda x: f"other_{col}" if x in rare_categories else x)
 
-        logging.info("GroupRareCategories: Transform complete")
         return Xt.values
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X)
 
     def get_feature_names_out(self, feature_names=None):
-        logging.info("GroupRareCategories: Getting feature names")
         return np.array(self.feature_names_out_, dtype=str)
 
 
@@ -144,13 +134,11 @@ class LogTransform(FeatureEngineeringTemplate):
         self.features = features
 
     def apply_transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        logging.info("Applying Log Transform")
         df_transformed = df.copy()
         for feature in self.features:
             df_transformed[feature] = np.log1p(
                 df[feature]
             )
-        logging.info("Log Transform Done")
         return df_transformed
 
 
@@ -160,10 +148,8 @@ class StandardScaling(FeatureEngineeringTemplate):
         self.scaler = StandardScaler()
 
     def apply_transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        logging.info("Applying Standard Scaling")
         df_transformed = df.copy()
         df_transformed[self.features] = self.scaler.fit_transform(df[self.features])
-        logging.info("Standard Scaling Done")
         return df_transformed
 
 
@@ -173,10 +159,8 @@ class MinMaxScaling(FeatureEngineeringTemplate):
         self.scaler = MinMaxScaler()
 
     def apply_transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        logging.info("Applying MinMax Scaling")
         df_transformed = df.copy()
         df_transformed[self.features] = self.scaler.fit_transform(df[self.features])
-        logging.info("MinMax Scaling Done")
         return df_transformed
 
 
@@ -188,7 +172,6 @@ class OneHotEncoding(FeatureEngineeringTemplate):
         self.cardinality_threshold = cardinality_threshold
 
     def apply_transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        logging.info("Applying OneHot Encoding")
         df_transformed = df.copy()
         encoded_df = pd.DataFrame(
             self.ohe.fit_transform(df[self.features]),
@@ -196,7 +179,6 @@ class OneHotEncoding(FeatureEngineeringTemplate):
         )
         df_transformed = df_transformed.drop(columns=self.features)
         df_transformed = pd.concat([df_transformed, encoded_df])
-        logging.info("OneHot Encoding Done")
         return df_transformed
 
 
@@ -208,7 +190,6 @@ class FeatureEngineer:
         self._strategy = strategy
 
     def apply_feature_engineering(self, df: pd.DataFrame) -> pd.DataFrame:
-        logging.info("Applying Feature Engineering")
         return self._strategy.apply_transform(df)
 
 
