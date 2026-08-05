@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 def data_quality_validation_step(
     train: pd.DataFrame,
     test: pd.DataFrame,
+    bronze_train_path: str | None = None,
+    bronze_test_path: str | None = None,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     start_time = time.perf_counter()
     validator = DataQualityValidator(USED_CAR_SCHEMA)

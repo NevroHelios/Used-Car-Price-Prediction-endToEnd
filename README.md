@@ -19,7 +19,7 @@ An end-to-end machine learning pipeline for predicting used car prices, built wi
 │   ├── handling_missing_values_step.py
 │   ├── feature_engineering_step.py
 │   ├── outlier_detection_step.py
-│   ├── persist_data_step.py       # Persist cleaned data to SQLite
+│   ├── persist_data_step.py       # Persist bronze/silver/gold tables to SQLite
 │   ├── data_splitter_step.py      # Train/test split (80/20)
 │   ├── model_building_step.py     # RandomForest + preprocessing pipeline
 │   ├── evaluation_step.py         # RMSE, R² metrics
@@ -36,9 +36,10 @@ An end-to-end machine learning pipeline for predicting used car prices, built wi
 ## Pipeline
 
 ```
-Data Ingestion → Data Quality Validation → Handle Missing Values
-    → Feature Engineering (log transform) → Outlier Detection (IQR)
-    → Persist Cleaned Data → Train/Test Split → Model Building → Evaluation
+Data Ingestion → Persist Bronze → Data Quality Validation
+    → Handle Missing Values → Outlier Detection (Silver)
+    → Feature Engineering + Dashboard Aggregates (Gold)
+    → Train/Test Split → Model Building → Evaluation
 ```
 
 The ingestion and data-quality steps log row counts and step duration for basic pipeline health monitoring.
@@ -78,17 +79,25 @@ The step raises `DataQualityValidationError` on breach and logs validation outco
 
 ### Queryable Output
 
-The cleaned, engineered, outlier-filtered training table is persisted to SQLite:
+The pipeline persists bronze, silver, and gold tables to SQLite:
 
-- Database: `data/processed/used_car_features.sqlite`
-- Table: `cleaned_used_car_prices`
+- Database: `data/processed/used_car_pipeline.sqlite`
+- Bronze tables: `bronze_train`, `bronze_test`
+- Silver tables: `silver_clean_train`, `silver_clean_test`
+- Gold tables: `gold_model_features_train`, `gold_dashboard_aggregates`
+
+Layer definitions:
+
+- Bronze: raw ingested train/test data, persisted before correction.
+- Silver: validated, missing-handled, outlier-cleaned data.
+- Gold: model-ready feature table plus OLAP-style dashboard aggregates for monitoring distribution changes.
 
 Example query:
 
 ```bash
-sqlite3 data/processed/used_car_features.sqlite \
-  "SELECT brand, COUNT(*) AS listings, AVG(price) AS avg_log_price
-   FROM cleaned_used_car_prices
+sqlite3 data/processed/used_car_pipeline.sqlite \
+  "SELECT brand, SUM(row_count) AS listings, AVG(avg_price) AS avg_price
+   FROM gold_dashboard_aggregates
    GROUP BY brand
    ORDER BY listings DESC
    LIMIT 10;"
